@@ -1,0 +1,52 @@
+%option noyywrap
+%option never-interactive
+
+%{
+#include "E--_lexer.tab.h"
+#include <iostream>
+
+using namespace std;
+
+const char* yyfilename="";
+int yylinenum=0;
+
+%}
+/* Definitions */
+
+DECIMAL_DIGIT		[0-9]
+UINTNUM			{DECIMAL_DIGIT}+
+NON_ZERO_DIGIT		[1-9]
+NO_LEADING_ZERO		({NON_ZERO_DIGIT}{DECIMAL_DIGIT}*)|0
+DECIMAL_INTEGER		(\+|\-)?{NO_LEADING_ZERO}
+NON_ZERO_HEX_DIGIT	[a-fA-F]|{NON_ZERO_DIGIT}
+HEX_DIGIT		[a-fA-F]|{DECIMAL_DIGIT}
+HEX_TAIL		({NON_ZERO_HEX_DIGIT}{HEX_DIGIT}*)|0
+HEX_INTEGER		0[x|X]{HEX_TAIL}
+INTEGER			{DECIMAL_INTEGER}|{HEX_INTEGER}
+
+%%
+
+ /**************** Recognize operators ****************/
+
+"->"	{ return TOK_ARROW; }
+"?"	    { return TOK_QMARK; }
+
+    /* Fill in the other operators */
+
+ /**************** Recognize reserved words ****************/
+
+ /* Basic types */
+
+"enum"           { return TOK_ENUM; }
+
+ /**************** Recognize constants ****************/
+
+{INTEGER}	        { return TOK_UINTNUM; }
+
+ /**************** Unrecognized character ==> error ****************/
+
+. {
+	return TOK_SYNTAX_ERROR;
+}
+
+%%
