@@ -29,7 +29,9 @@ IDENTIFIER		[_a-zA-Z][_a-zA-Z0-9]*
 NO_TRAILING_ZERO	([0-9]*[1-9])|0
 EXPONENT_PART		[e|E][\-|\+]?0?[1-9][0-9]*
 FLOAT			(({NO_LEADING_ZERO}\.{NO_TRAILING_ZERO}?)|(\.{NO_TRAILING_ZERO})){EXPONENT_PART}?
+WARN_FLOAT		(\.|{INTEGER}){EXPONENT_PART}
 STRING_CONSTANT		\"(([\\][\"])|([^\"\n]))*[\"]
+MULTI_STRING_CONSTANT	\"(([\\][\"])|([^\"\n]))*[\n]
 LINE_INFO		\#[^\n]*\n
 NEW_LINE		\n
 %%
@@ -38,6 +40,7 @@ NEW_LINE		\n
 
 {LINE_INFO}		{
 				extract_line_info(yytext, fname, &yylinenum);
+				yyfilename = fname;
 				//printf( "fname:%s, linenum:%d\n", fname, yylinenum );
 			}
 
@@ -123,7 +126,18 @@ NEW_LINE		\n
 				yylval.dVal = atof(yytext);
 				return TOK_DOUBLENUM;
 			}
+{WARN_FLOAT}		{
+				printf("%s:%d: Error: Unsupported Float format '%s'\n", yyfilename, yylinenum, yytext);
+				//yylval.dVal = atof(yytext);
+				//return TOK_DOUBLENUM;
+			}
 {STRING_CONSTANT}	{ 
+				extract_string_val(yytext, out);
+				yylval.cVal = out;
+				return TOK_STRCONST;
+			}
+{MULTI_STRING_CONSTANT}	{
+				printf("String constant cannot span multiple lines\n"); 
 				extract_string_val(yytext, out);
 				yylval.cVal = out;
 				return TOK_STRCONST;
@@ -140,7 +154,7 @@ NEW_LINE		\n
  /**************** Unrecognized character ==> error ****************/
 
 . {
-	printf( "ERROR: fname:%s, linenum:%d\n", fname, yylinenum );
+	// printf( "ERROR: fname:%s, linenum:%d\n", fname, yylinenum );
 	return TOK_SYNTAX_ERROR;
 }
 

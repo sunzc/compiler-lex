@@ -121,6 +121,11 @@ int extract_line_info(char *line_info, char *fname, int *lnum) {
 	if (line_info[i] == '\"') {
 		i++;
 		while(line_info[i] != '\"' && line_info[i] != '\0' && i < MAX_STR_LEN) {
+			// skip directory name, eg. "tests/in10" will only keep "in10"
+			if (line_info[i] == '/') {
+				idx = 0;
+				i++;
+			}
 			fname[idx++] = line_info[i++];
 		}
 		fname[idx] = '\0';
