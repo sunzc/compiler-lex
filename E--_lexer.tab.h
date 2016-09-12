@@ -75,3 +75,7 @@ extern const char* yyfilename;
 extern char *yytext;
 
 extern "C" int yylex();
+extern "C" int extract_string_val(char *in, char *out);
+extern "C" int extract_line_info(char *line_info, char *fname, int *lnum);
+
+#define MAX_STR_LEN	256

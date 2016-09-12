@@ -3,9 +3,12 @@ CC= g++
 CFLAGS = -c -g -O 
 FLEX = flex
 
-demo:	drivLex.o E--_lexer.o
-	$(CC) -o demo E--_lexer.o drivLex.o -lfl
+demo:	drivLex.o help_func.o E--_lexer.o
+	$(CC) -o demo E--_lexer.o drivLex.o help_func.o -lfl
 
+help_func.o:	help_func.C
+	$(CC) $(CFLAGS) help_func.C
+	
 E--_lexer.o:	E--_lexer.C
 	$(CC) $(CFLAGS) E--_lexer.C
 

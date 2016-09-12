@@ -9,6 +9,8 @@ using namespace std;
 
 const char* yyfilename="";
 int yylinenum=0;
+char out[MAX_STR_LEN];
+char fname[MAX_STR_LEN];
 
 %}
 /* Definitions */
@@ -23,13 +25,64 @@ HEX_DIGIT		[a-fA-F]|{DECIMAL_DIGIT}
 HEX_TAIL		({NON_ZERO_HEX_DIGIT}{HEX_DIGIT}*)|0
 HEX_INTEGER		0[x|X]{HEX_TAIL}
 INTEGER			{DECIMAL_INTEGER}|{HEX_INTEGER}
-
+IDENTIFIER		[_a-zA-Z][_a-zA-Z0-9]*
+NO_TRAILING_ZERO	([0-9]*[1-9])|0
+EXPONENT_PART		[e|E][\-|\+]?0?[1-9][0-9]*
+FLOAT			(({NO_LEADING_ZERO}\.{NO_TRAILING_ZERO}?)|(\.{NO_TRAILING_ZERO})){EXPONENT_PART}?
+STRING_CONSTANT		\"(([\\][\"])|([^\"\n]))*[\"]
+LINE_INFO		\#[^\n]*\n
+NEW_LINE		\n
 %%
 
+ /*************** Recognize line macros ****************/
+
+{LINE_INFO}		{
+				extract_line_info(yytext, fname, &yylinenum);
+				//printf( "fname:%s, linenum:%d\n", fname, yylinenum );
+			}
+
+{NEW_LINE}		{
+				yylinenum++;
+			}
+
+" "			{
+			}
  /**************** Recognize operators ****************/
 
-"->"	{ return TOK_ARROW; }
-"?"	    { return TOK_QMARK; }
+"->"		{ return TOK_ARROW; }
+"?"		{ return TOK_QMARK; }
+":"		{ return TOK_COLON; }
+","		{ return TOK_COMMA; }
+"."		{ return TOK_DOT; }
+";"		{ return TOK_SEMICOLON; }
+"["		{ return TOK_LBRACK; }
+"]"		{ return TOK_RBRACK; }
+"("		{ return TOK_LPAREN; }
+")"		{ return TOK_RPAREN; }
+"{"		{ return TOK_LBRACE; }
+"}"		{ return TOK_RBRACE; }
+"+"		{ return TOK_PLUS; }
+"-"		{ return TOK_MINUS; }
+"*"		{ return TOK_MULT; }
+"/"		{ return TOK_DIV; }
+"="		{ return TOK_ASSIGN; }
+"&&"		{ return TOK_AND; }
+"||"		{ return TOK_OR; }
+"!"		{ return TOK_NOT; }
+">"		{ return TOK_GT; }
+"<"		{ return TOK_LT; }
+"=="		{ return TOK_EQ; }
+"!="		{ return TOK_NE; }
+">="		{ return TOK_GE; }
+"<="		{ return TOK_LE; }
+"%"		{ return TOK_MOD; }
+"^"		{ return TOK_BITXOR; }
+"&"		{ return TOK_BITAND; }
+"|"		{ return TOK_BITOR; }
+"\\/"		{ return TOK_PAT_OR; }
+"~"		{ return TOK_BITNOT; }
+"<<"		{ return TOK_SHL; }
+">>"		{ return TOK_SHR; }
 
     /* Fill in the other operators */
 
@@ -37,15 +90,57 @@ INTEGER			{DECIMAL_INTEGER}|{HEX_INTEGER}
 
  /* Basic types */
 
-"enum"           { return TOK_ENUM; }
+"any"			{ return TOK_ANY; }
+"bit"			{ return TOK_BIT; }
+"bool"			{ return TOK_BOOL; }
+"byte"			{ return TOK_BYTE; }
+"class"			{ return TOK_CLASS; }
+"double"		{ return TOK_DOUBLE; }
+"enum"			{ return TOK_ENUM; }
+"int"			{ return TOK_INT; }
+"string"		{ return TOK_STRING; }
+"void"			{ return TOK_VOID; }
+"event"			{ return TOK_EVENT; }
+"false"			{ return TOK_FALSE; }
+"true"			{ return TOK_TRUE; }
+"if"			{ return TOK_IF; }
+"else"			{ return TOK_ELSE; }
+"import"		{ return TOK_USE; }
+"interface"		{ return TOK_INTERFACE; }
+"print"			{ return TOK_PRINT; }
+"return"		{ return TOK_RETURN; }
 
  /**************** Recognize constants ****************/
 
-{INTEGER}	        { return TOK_UINTNUM; }
+{INTEGER}	        {
+				// printf("INTEGER:%s", yytext);
+				yylval.uVal = (int)strtol(yytext, NULL, 0);
+				//yylval.uVal = atoi(yytext);
+				return TOK_UINTNUM;
+			}
+{FLOAT}			{
+				// printf("FLOAT:%s", yytext);
+				yylval.dVal = atof(yytext);
+				return TOK_DOUBLENUM;
+			}
+{STRING_CONSTANT}	{ 
+				extract_string_val(yytext, out);
+				yylval.cVal = out;
+				return TOK_STRCONST;
+			}
+
+ /**************** Recognize identifiers ****************/
+
+{IDENTIFIER}	        {
+				// printf("IDENTIFIER:%s", yytext);
+				yylval.cVal = yytext;
+				return TOK_ID;
+			}
 
  /**************** Unrecognized character ==> error ****************/
 
 . {
+	printf( "ERROR: fname:%s, linenum:%d\n", fname, yylinenum );
 	return TOK_SYNTAX_ERROR;
 }
 
