@@ -28,8 +28,9 @@ INTEGER			{DECIMAL_INTEGER}|{HEX_INTEGER}
 IDENTIFIER		[_a-zA-Z][_a-zA-Z0-9]*
 NO_TRAILING_ZERO	([0-9]*[1-9])|0
 EXPONENT_PART		[e|E][\-|\+]?0?[1-9][0-9]*
-FLOAT			(({NO_LEADING_ZERO}\.{NO_TRAILING_ZERO}?)|(\.{NO_TRAILING_ZERO})){EXPONENT_PART}?
-WARN_FLOAT		(\.|{INTEGER}){EXPONENT_PART}
+FLOAT			(\+|\-)?(({NO_LEADING_ZERO}\.{NO_TRAILING_ZERO}?)|(\.{NO_TRAILING_ZERO})){EXPONENT_PART}?
+NOPOINT_FLOAT		(\+|\-)?{INTEGER}{EXPONENT_PART}
+WARN_FLOAT		(\+|\-)?(\.|{INTEGER}){EXPONENT_PART}
 STRING_CONSTANT		\"(([\\][\"])|([^\"\n]))*[\"]
 MULTI_STRING_CONSTANT	\"(([\\][\"])|([^\"\n]))*[\n]
 LINE_INFO		\#[^\n]*\n
@@ -122,6 +123,11 @@ NEW_LINE		\n
 				return TOK_UINTNUM;
 			}
 {FLOAT}			{
+				// printf("FLOAT:%s", yytext);
+				yylval.dVal = atof(yytext);
+				return TOK_DOUBLENUM;
+			}
+{NOPOINT_FLOAT}		{
 				// printf("FLOAT:%s", yytext);
 				yylval.dVal = atof(yytext);
 				return TOK_DOUBLENUM;
